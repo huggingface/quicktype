@@ -30,7 +30,7 @@ export const tsFlowOptions = Object.assign({}, javaScriptOptions, {
     ),
     preferUnknown: new BooleanOption(
         "prefer-unknown",
-        "Use unknown instead of any",
+        "Use unknown instead of any. Mutually exclusive with runtime-typecheck.",
         false
     ),
 });
@@ -73,6 +73,9 @@ export class TypeScriptTargetLanguage extends TypeScriptFlowBaseTargetLanguage {
         renderContext: RenderContext,
         untypedOptionValues: { [name: string]: any }
     ): TypeScriptRenderer {
+        if (tsFlowOptions.runtimeTypecheck && tsFlowOptions.preferUnknown) {
+            throw new Error("Cannot render Typescript: prefer-unknown and runtime-typechecks option flags are mutually exclusive.")
+        }
         return new TypeScriptRenderer(this, renderContext, getOptionValues(tsFlowOptions, untypedOptionValues));
     }
 }
@@ -268,13 +271,13 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected deserializerFunctionLine(t: Type, name: Name): Sourcelike {
-        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static to", name, "(json: ", jsonType, "): ", this.sourceFor(t).source];
     }
 
     protected serializerFunctionLine(t: Type, name: Name): Sourcelike {
         const camelCaseName = modifySource(camelCase, name);
-        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static ", camelCaseName, "ToJson(value: ", this.sourceFor(t).source, "): ", returnType];
     }
 
