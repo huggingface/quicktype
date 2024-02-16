@@ -427,11 +427,10 @@ function transform(val${anyAnnotation}, typ${anyAnnotation}, getProps${anyAnnota
         });
         Object.getOwnPropertyNames(val).forEach(key => {
             if (!Object.prototype.hasOwnProperty.call(props, key)) {
-                result[key] = ${
-                    this._jsOptions.runtimeTypecheckIgnoreUnknownProperties
+                result[key] = ${this._jsOptions.runtimeTypecheckIgnoreUnknownProperties
                         ? `val[key]`
                         : `transform(val[key], additional, getProps, key, ref)`
-                };
+                    };
             }
         });
         return result;

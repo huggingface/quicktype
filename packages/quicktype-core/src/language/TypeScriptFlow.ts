@@ -27,17 +27,14 @@ export const tsFlowOptions = Object.assign({}, javaScriptOptions, {
         "prefer-const-values",
         "Use string instead of enum for string enums with single value",
         false
-    )
+    ),
+    preferUnknown: new BooleanOption(
+        "prefer-unknown",
+        "Use unknown instead of any. Mutually exclusive with runtime-typecheck.",
+        false
+    ),
 });
-
-const tsFlowTypeAnnotations = {
-    any: ": any",
-    anyArray: ": any[]",
-    anyMap: ": { [k: string]: any }",
-    string: ": string",
-    stringArray: ": string[]",
-    boolean: ": boolean"
-};
+;
 
 export abstract class TypeScriptFlowBaseTargetLanguage extends JavaScriptTargetLanguage {
     protected getOptions(): Option<any>[] {
@@ -52,7 +49,8 @@ export abstract class TypeScriptFlowBaseTargetLanguage extends JavaScriptTargetL
             tsFlowOptions.rawType,
             tsFlowOptions.preferUnions,
             tsFlowOptions.preferTypes,
-            tsFlowOptions.preferConstValues
+            tsFlowOptions.preferConstValues,
+            tsFlowOptions.preferUnknown,
         ];
     }
 
@@ -75,6 +73,9 @@ export class TypeScriptTargetLanguage extends TypeScriptFlowBaseTargetLanguage {
         renderContext: RenderContext,
         untypedOptionValues: { [name: string]: any }
     ): TypeScriptRenderer {
+        if (tsFlowOptions.runtimeTypecheck && tsFlowOptions.preferUnknown) {
+            throw new Error("Cannot render Typescript: prefer-unknown and runtime-typechecks option flags are mutually exclusive.")
+        }
         return new TypeScriptRenderer(this, renderContext, getOptionValues(tsFlowOptions, untypedOptionValues));
     }
 }
@@ -105,6 +106,10 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         super(targetLanguage, renderContext, _tsFlowOptions);
     }
 
+    protected get anyType(): string {
+        return this._tsFlowOptions.preferUnknown ? "unknown" : "any";
+    }
+
     protected namerForObjectProperty(): Namer {
         if (this._tsFlowOptions.nicePropertyNames) {
             return funPrefixNamer("properties", s => this.nameStyle(s, false));
@@ -123,7 +128,7 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         }
         return matchType<MultiWord>(
             t,
-            _anyType => singleWord("any"),
+            _anyType => singleWord(this.anyType),
             _nullType => singleWord("null"),
             _boolType => singleWord("boolean"),
             _integerType => singleWord("number"),
@@ -179,9 +184,9 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         }
     }
 
-    private emitClass(c: ClassType, className: Name) {
-        this.emitDescription(this.descriptionForType(c));
-        this.emitClassBlock(c, className);
+    private emitClass(classType: ClassType, className: Name) {
+        this.emitDescription(this.descriptionForType(classType));
+        this.emitClassBlock(classType, className);
     }
 
     emitUnion(u: UnionType, unionName: Name) {
@@ -195,7 +200,16 @@ export abstract class TypeScriptFlowBaseRenderer extends JavaScriptRenderer {
         this.emitLine("export type ", unionName, " = ", children.source, ";");
     }
 
+    protected emitTopLevelAlias(t: Type, name: Name): void {
+        this.emitLine("export type ", name, " = ", this.sourceFor(t).source, ";");
+    }
+
     protected emitTypes(): void {
+        this.forEachTopLevel(
+            "leading",
+            (t, name) => this.emitTopLevelAlias(t, name),
+            t => this.namedTypeToNameForTopLevel(t) === undefined
+        );
         this.forEachNamedType(
             "leading-and-interposing",
             (c: ClassType, n: Name) => this.emitClass(c, n),
@@ -257,13 +271,13 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected deserializerFunctionLine(t: Type, name: Name): Sourcelike {
-        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const jsonType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static to", name, "(json: ", jsonType, "): ", this.sourceFor(t).source];
     }
 
     protected serializerFunctionLine(t: Type, name: Name): Sourcelike {
         const camelCaseName = modifySource(camelCase, name);
-        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : "any";
+        const returnType = this._tsFlowOptions.rawType === "json" ? "string" : this.anyType;
         return ["public static ", camelCaseName, "ToJson(value: ", this.sourceFor(t).source, "): ", returnType];
     }
 
@@ -272,7 +286,16 @@ export class TypeScriptRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({ never: ": never" }, tsFlowTypeAnnotations);
+        const typeAnnotations = {
+            any: `: ${this.anyType}`,
+            anyArray: `: ${this.anyType}[]`,
+            anyMap: `: { [k: string]: ${this.anyType} }`,
+            string: ": string",
+            stringArray: ": string[]",
+            boolean: ": boolean"
+        };
+
+        return Object.assign({ never: ": never" }, typeAnnotations);
     }
 
     protected emitModuleExports(): void {
@@ -345,7 +368,16 @@ export class FlowRenderer extends TypeScriptFlowBaseRenderer {
     }
 
     protected get typeAnnotations(): JavaScriptTypeAnnotations {
-        return Object.assign({ never: "" }, tsFlowTypeAnnotations);
+        const typeAnnotations = {
+            any: `: ${this.anyType}`,
+            anyArray: `: ${this.anyType}[]`,
+            anyMap: `: { [k: string]: ${this.anyType} }`,
+            string: ": string",
+            stringArray: ": string[]",
+            boolean: ": boolean"
+        };
+
+        return Object.assign({ never: ": never" }, typeAnnotations);
     }
 
     protected emitEnum(e: EnumType, enumName: Name): void {
