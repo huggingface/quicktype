@@ -475,7 +475,7 @@ export class PythonRenderer extends ConvenienceRenderer {
         // Custom to HF fork: emit as Literal instead of Enum
         this.emitLine([
             this.nameForNamedType(t),
-            this.typeHint(" = ", this.withTyping("Literal"), "[", arrayIntercalate(", ", Array.from(t.cases.keys())), "]")
+            this.typeHint(" = ", this.withTyping("Literal"), "[", arrayIntercalate(", ", Array.from(t.cases.keys()).map(this.string)), "]")
         ]);
     }
 
