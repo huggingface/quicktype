@@ -73,10 +73,11 @@ export class TypeScriptTargetLanguage extends TypeScriptFlowBaseTargetLanguage {
         renderContext: RenderContext,
         untypedOptionValues: { [name: string]: any }
     ): TypeScriptRenderer {
-        if (tsFlowOptions.runtimeTypecheck && tsFlowOptions.preferUnknown) {
+        const typedOptionValues = getOptionValues(tsFlowOptions, untypedOptionValues)
+        if (typedOptionValues.runtimeTypecheck && typedOptionValues.preferUnknown) {
             throw new Error("Cannot render Typescript: prefer-unknown and runtime-typechecks option flags are mutually exclusive.")
         }
-        return new TypeScriptRenderer(this, renderContext, getOptionValues(tsFlowOptions, untypedOptionValues));
+        return new TypeScriptRenderer(this, renderContext, typedOptionValues);;
     }
 }
 
