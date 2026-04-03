@@ -7,7 +7,7 @@ jobs:
     build:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
             - uses: ./.github/workflows/setup
 
     test:
@@ -69,42 +69,42 @@ jobs:
 
         name: ${{ matrix.fixture }}
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
             - uses: ./.github/workflows/setup
 
             - name: Setup PHP
               if: ${{ contains(matrix.fixture, 'php') }}
-              uses: shivammathur/setup-php@v2
+              uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f  # v2
               with:
                   php-version: "8.2"
 
             - name: Setup Dart
               if: ${{ contains(matrix.fixture, 'dart') }}
-              uses: dart-lang/setup-dart@v1.3
+              uses: dart-lang/setup-dart@6a218f2413a3e78e9087f638a238f6b40893203d  # v1.3
               with:
                   sdk: 2.14.4
 
             - name: Setup Swift
               if: ${{ contains(matrix.fixture, 'swift') }}
-              uses: swift-actions/setup-swift@v1
+              uses: swift-actions/setup-swift@cdbe0f7f4c77929b6580e71983e8606e55ffe7e4  # v1
               with:
                   swift-version: "5.7.2"
 
             - name: Install Ruby
-              uses: ruby/setup-ruby@v1
+              uses: ruby/setup-ruby@3ff19f5e2baf30647122352b96108b1fbe250c64  # v1
               if: ${{ contains(matrix.fixture, 'ruby') }}
               with:
                   ruby-version: "3.2.0"
 
             - name: Setup .NET Core SDK
               if: ${{ contains(matrix.fixture, 'csharp') }}
-              uses: actions/setup-dotnet@v3
+              uses: actions/setup-dotnet@55ec9447dda3d1cf6bd587150f3262f30ee10815  # v3
               with:
                   dotnet-version: 6
 
             - name: Install Rust
               if: ${{ contains(matrix.fixture, 'rust') }}
-              uses: actions-rs/toolchain@v1
+              uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af  # v1
               with:
                   toolchain: stable
 
@@ -123,7 +123,7 @@ jobs:
                   fi
             - name: Install Python 3.7
               if: ${{ contains(matrix.fixture, 'python') }}
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c  # v4
               with:
                   python-version: 3.7
 
@@ -137,24 +137,24 @@ jobs:
                   npm install -g flow-bin@0.66.0 flow-remove-types@1.2.3
             - name: Install Java
               if: ${{ matrix.fixture == 'java,schema-java' || contains(matrix.fixture, 'kotlin') }}
-              uses: actions/setup-java@v3
+              uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62  # v3
               with:
                   java-version: "11"
                   distribution: "adopt"
 
             - name: Install Maven
               if: ${{ matrix.fixture == 'java,schema-java' }}
-              uses: stCarolas/setup-maven@v4.5
+              uses: stCarolas/setup-maven@07fbbe97d97ef44336b7382563d66743297e442f  # v4.5
               with:
                   maven-version: 3.8.2
 
             - name: Install Kotlin
               if: ${{ contains(matrix.fixture, 'kotlin') }}
-              uses: fwilhe2/setup-kotlin@main
+              uses: fwilhe2/setup-kotlin@ff13a3c9bdd41729590546b4aacbb580ccc0aefc  # main
 
             - name: Install go
               if: ${{ contains(matrix.fixture, 'golang') }}
-              uses: actions/setup-go@v3
+              uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495  # v3
               with:
                   go-version: 1.15
 
@@ -172,7 +172,7 @@ jobs:
 
             - name: Install scala
               if: ${{ contains(matrix.fixture, 'scala3') }}
-              uses: VirtusLab/scala-cli-setup@main
+              uses: VirtusLab/scala-cli-setup@38df20348ed96678a702f535045753de021fb62c  # main
             - run: echo '@main def hello() = println("We need this spam print statement for bloop to exit correctly...")' | scala-cli _
               if: ${{ contains(matrix.fixture, 'scala3') }}
 
